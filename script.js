@@ -488,38 +488,57 @@ const initInteractiveFeatures = () => {
   // Custom Touch and Mouse drag control
   let isDragging = false;
   let dragStartX = 0;
+  let dragStartY = 0;
   let dragStartProgress = 0;
 
   const handleDragStart = (e) => {
     if (!isZoomed) return;
     isDragging = true;
-    dragStartX = e.clientX || (e.touches && e.touches[0].clientX);
+    
+    const isTouch = e.touches && e.touches.length > 0;
+    if (isTouch) {
+      e.preventDefault();
+      dragStartY = e.touches[0].clientY;
+    } else {
+      dragStartX = e.clientX;
+    }
+    
     dragStartProgress = sliderTargetProgress;
     document.body.classList.add("hovering-image");
-    followerText.textContent = "spin";
+    if (followerText) followerText.textContent = "spin";
   };
 
   const handleDragMove = (e) => {
     if (!isDragging || !isZoomed) return;
-    const currentX = e.clientX || (e.touches && e.touches[0].clientX);
-    const dx = currentX - dragStartX;
-    const deltaProgress = -dx / 160; // 160px drag = 1 index step
-    animateProgress(dragStartProgress + deltaProgress);
+    
+    const isTouch = e.touches && e.touches.length > 0;
+    if (isTouch) {
+      e.preventDefault();
+      const currentY = e.touches[0].clientY;
+      const dy = currentY - dragStartY;
+      const deltaProgress = -dy / 160; // swipe up (dy negative) spins forward
+      animateProgress(dragStartProgress + deltaProgress);
+    } else {
+      const currentX = e.clientX;
+      const dx = currentX - dragStartX;
+      const deltaProgress = -dx / 160;
+      animateProgress(dragStartProgress + deltaProgress);
+    }
   };
 
   const handleDragEnd = () => {
     if (!isDragging) return;
     isDragging = false;
     document.body.classList.remove("hovering-image");
-    followerText.textContent = "drag";
+    if (followerText) followerText.textContent = "drag";
   };
 
   viewerContent.addEventListener("mousedown", handleDragStart);
   window.addEventListener("mousemove", handleDragMove);
   window.addEventListener("mouseup", handleDragEnd);
 
-  viewerContent.addEventListener("touchstart", handleDragStart, { passive: true });
-  window.addEventListener("touchmove", handleDragMove, { passive: true });
+  viewerContent.addEventListener("touchstart", handleDragStart, { passive: false });
+  window.addEventListener("touchmove", handleDragMove, { passive: false });
   window.addEventListener("touchend", handleDragEnd);
 
   // Opening the Semi-Circular Viewer on Double Click / Double Tap
