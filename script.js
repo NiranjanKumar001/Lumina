@@ -617,6 +617,9 @@ const initInteractiveFeatures = () => {
   const closeViewer = () => {
     if (!isZoomed) return;
 
+    // Kill any active text reveal tweens to prevent race conditions
+    gsap.killTweensOf([viewerTitle, viewerHelp]);
+
     // Fade out text info
     gsap.to([viewerTitle, viewerHelp], {
       y: 20,

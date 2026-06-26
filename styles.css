@@ -777,10 +777,15 @@ body.hovering-image .custom-cursor-follower {
   display: flex;
   justify-content: center;
   align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
 .fullscreen-viewer.active {
   pointer-events: all;
+  opacity: 1;
+  visibility: visible;
 }
 
 .viewer-bg {
