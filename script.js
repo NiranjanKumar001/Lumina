@@ -495,6 +495,9 @@ const initInteractiveFeatures = () => {
     if (!isZoomed) return;
     isDragging = true;
     
+    // Kill any active transitions immediately to prevent fighting the user
+    if (sliderTween) sliderTween.kill();
+    
     const isTouch = e.touches && e.touches.length > 0;
     if (isTouch) {
       e.preventDefault();
@@ -503,7 +506,7 @@ const initInteractiveFeatures = () => {
       dragStartX = e.clientX;
     }
     
-    dragStartProgress = sliderTargetProgress;
+    dragStartProgress = sliderCurrentProgress; // Use actual current progress
     document.body.classList.add("hovering-image");
     if (followerText) followerText.textContent = "spin";
   };
@@ -512,18 +515,24 @@ const initInteractiveFeatures = () => {
     if (!isDragging || !isZoomed) return;
     
     const isTouch = e.touches && e.touches.length > 0;
+    let deltaProgress = 0;
+    
     if (isTouch) {
       e.preventDefault();
       const currentY = e.touches[0].clientY;
       const dy = currentY - dragStartY;
-      const deltaProgress = -dy / 160; // swipe up (dy negative) spins forward
-      animateProgress(dragStartProgress + deltaProgress);
+      deltaProgress = -dy / 250; // Increased to 250px for a more controlled, smoother swipe feel
     } else {
       const currentX = e.clientX;
       const dx = currentX - dragStartX;
-      const deltaProgress = -dx / 160;
-      animateProgress(dragStartProgress + deltaProgress);
+      deltaProgress = -dx / 250;
     }
+    
+    // Directly update the position 1:1 with finger tracking
+    sliderCurrentProgress = dragStartProgress + deltaProgress;
+    sliderTargetProgress = sliderCurrentProgress;
+    
+    updateSliderPosition(sliderCurrentProgress);
   };
 
   const handleDragEnd = () => {
@@ -531,6 +540,10 @@ const initInteractiveFeatures = () => {
     isDragging = false;
     document.body.classList.remove("hovering-image");
     if (followerText) followerText.textContent = "drag";
+    
+    // Smoothly snap to the nearest index on release
+    const nearestIndex = Math.round(sliderCurrentProgress);
+    animateProgress(nearestIndex);
   };
 
   viewerContent.addEventListener("mousedown", handleDragStart);
