@@ -27,6 +27,9 @@ const setupTextSplitting = () => {
       const textContent = line.textContent;
       line.innerHTML = `<span>${textContent}</span>`;
     });
+
+    // Make element visible now that the text inside is split into translated spans
+    gsap.set(element, { opacity: 1 });
   });
 };
 
