@@ -694,6 +694,8 @@ const initNavPill = () => {
   const activePill = linksContainer.querySelector(".nav-active-pill");
   const links = linksContainer.querySelectorAll("a");
   
+  let isScrollingNav = false;
+  
   const updatePill = (targetEl) => {
     if (!targetEl || !activePill) return;
     const left = targetEl.offsetLeft;
@@ -721,16 +723,34 @@ const initNavPill = () => {
   links.forEach(link => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
+      isScrollingNav = true;
       links.forEach(l => l.classList.remove("active"));
       link.classList.add("active");
       updatePill(link);
       
       const targetId = link.getAttribute("href");
-      if (targetId !== "#" && window.globalLenis) {
-        window.globalLenis.scrollTo(targetId, { 
-          duration: 1.5, 
-          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) 
-        });
+      if (targetId !== "#") {
+        const targetEl = document.querySelector(targetId);
+        if (targetEl) {
+          if (window.globalLenis) {
+            window.globalLenis.scrollTo(targetEl, { 
+              duration: 1.5, 
+              easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+              onComplete: () => {
+                isScrollingNav = false;
+              }
+            });
+          } else {
+            targetEl.scrollIntoView({ behavior: "smooth" });
+            setTimeout(() => {
+              isScrollingNav = false;
+            }, 1000);
+          }
+        } else {
+          isScrollingNav = false;
+        }
+      } else {
+        isScrollingNav = false;
       }
     });
 
@@ -744,6 +764,7 @@ const initNavPill = () => {
           start: "top 50%",
           end: "bottom 50%",
           onToggle: (self) => {
+            if (isScrollingNav) return;
             if (self.isActive) {
               links.forEach(l => l.classList.remove("active"));
               link.classList.add("active");
@@ -898,4 +919,114 @@ const initScrollAnimations = () => {
       ),
     });
   });
+
+  // --- Sticky Cards Animation (Services Section) ---
+  const cards = document.querySelectorAll(".sticky-cards .card");
+  if (cards.length > 0) {
+    const totalCards = cards.length;
+    const cardYOffset = 15;
+    const cardScaleStep = 0.08;
+
+    // Set initial states for stack
+    cards.forEach((card, i) => {
+      gsap.set(card, {
+        xPercent: -50,
+        yPercent: -50 + i * cardYOffset,
+        scale: 1 - i * cardScaleStep,
+        zIndex: totalCards - i,
+      });
+    });
+
+    // Create GSAP ScrollTrigger timeline
+    const tlCards = gsap.timeline({
+      scrollTrigger: {
+        trigger: ".sticky-cards",
+        start: "top top",
+        end: `+=${window.innerHeight * 4}px`,
+        pin: true,
+        pinSpacing: true,
+        scrub: 1,
+      }
+    });
+
+    for (let i = 0; i < totalCards; i++) {
+      const stepLabel = `step-${i}`;
+      tlCards.add(stepLabel);
+
+      // 1. Animate current card out of the screen (up and away)
+      tlCards.to(cards[i], {
+        yPercent: -220,
+        rotationX: 35,
+        scale: 0.9,
+        ease: "power1.inOut",
+        duration: 1
+      }, stepLabel);
+
+      // 2. Pull all behind cards forward in scale and visual position
+      for (let j = i + 1; j < totalCards; j++) {
+        const behindIndex = j - i;
+        const targetY = -50 + (behindIndex - 1) * cardYOffset;
+        const targetScale = 1 - (behindIndex - 1) * cardScaleStep;
+
+        tlCards.to(cards[j], {
+          yPercent: targetY,
+          scale: targetScale,
+          ease: "power1.inOut",
+          duration: 1
+        }, stepLabel);
+      }
+    }
+  }
+
+  // --- Outro Clocks & Scroll to Top ---
+  const backToTopBtn = document.getElementById("back-to-top-btn");
+  if (backToTopBtn) {
+    backToTopBtn.addEventListener("click", () => {
+      if (window.globalLenis) {
+        window.globalLenis.scrollTo(0, { 
+          duration: 2,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
+        });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  }
+
+  const tokyoTimeEl = document.getElementById("tokyo-time");
+  const londonTimeEl = document.getElementById("london-time");
+  if (tokyoTimeEl && londonTimeEl) {
+    const updateTimes = () => {
+      const now = new Date();
+      tokyoTimeEl.textContent = now.toLocaleTimeString("en-US", {
+        timeZone: "Asia/Tokyo",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+      });
+      londonTimeEl.textContent = now.toLocaleTimeString("en-US", {
+        timeZone: "Europe/London",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+      });
+    };
+    updateTimes();
+    setInterval(updateTimes, 1000);
+  }
+
+  // --- Intersection Divider Parallax ---
+  const dividerDots = document.querySelector(".section-intersection-divider .divider-dots");
+  if (dividerDots) {
+    gsap.to(dividerDots, {
+      xPercent: -8,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".section-intersection-divider",
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true
+      }
+    });
+  }
 };
