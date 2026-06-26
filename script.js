@@ -407,6 +407,7 @@ const initInteractiveFeatures = () => {
   let sliderTargetProgress = 0;
   let sliderCurrentProgress = 0;
   let sliderTween = null;
+  let lastRoundedIndex = 0;
 
   const updateSliderPosition = (progress) => {
     const N = allImages.length;
@@ -445,18 +446,39 @@ const initInteractiveFeatures = () => {
     const targetTitle = IMAGE_TITLES[wrappedIndex] || "Creative Design";
 
     if (viewerTitle.textContent !== targetTitle) {
+      lastRoundedIndex = roundedIndex;
+
       gsap.killTweensOf(viewerTitle);
-      gsap.to(viewerTitle, {
-        y: -15,
-        opacity: 0,
-        duration: 0.2,
-        ease: "power2.in",
+      gsap.set(viewerTitle, { y: 0, skewY: 0, opacity: 1 });
+
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_#X?/*[]";
+      const targetLength = targetTitle.length;
+      const state = { progress: 0 };
+
+      gsap.to(state, {
+        progress: 1,
+        duration: 0.3,
+        ease: "power2.out",
+        onUpdate: () => {
+          let output = "";
+          const decryptedCount = Math.floor(state.progress * targetLength);
+          
+          for (let i = 0; i < targetLength; i++) {
+            if (i < decryptedCount) {
+              output += targetTitle[i];
+            } else {
+              if (targetTitle[i] === " ") {
+                output += " ";
+              } else {
+                const randomChar = chars[Math.floor(Math.random() * chars.length)];
+                output += randomChar;
+              }
+            }
+          }
+          viewerTitle.textContent = output;
+        },
         onComplete: () => {
           viewerTitle.textContent = targetTitle;
-          gsap.fromTo(viewerTitle,
-            { y: 15, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }
-          );
         }
       });
     }
