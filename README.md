@@ -12,6 +12,11 @@
   <a href="#"><img src="https://img.shields.io/badge/Lenis-Smooth_Scroll-black?style=for-the-badge" alt="Lenis" /></a>
 </p>
 
+<p align="center">
+  <img src="./image.png" alt="Lumina Project Overview" width="100%" />
+</p>
+
+
 ```text
       :::       :::    :::  :::   :::  ::::::::::: ::::    :::     :::     
      :+:       :+:    :+:  :+:+: :+:+:     :+:     :+:+:   :+:   :+: :+:   
